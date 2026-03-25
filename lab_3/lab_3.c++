@@ -8,7 +8,6 @@ typedef struct Song{
     int ratings[3];
     struct Song *next;
     struct Song *prev;
-    struct Song *current;
 }Song;
 
 Song *Insert(Song *hd, string sng, string sngr, int rate[3]){
@@ -19,6 +18,7 @@ Song *Insert(Song *hd, string sng, string sngr, int rate[3]){
             p->ratings[i] = rate[i];
         }
     p->next = hd;
+    p->prev = hd;
     return p;
 }
 void print(Song *hd){
@@ -36,6 +36,28 @@ void print(Song *hd){
     }
 }
 
+Song *Prev(Song *hd) {
+    if (hd == NULL) {
+        return NULL;
+    }
+    
+    Song *prvhd = hd;
+    hd = hd->next; 
+    return hd;    
+}
+
+Song *Next(Song *hd) {
+    
+    Song *nxthd = hd;
+    nxthd = hd->prev;
+
+    if (hd == NULL) {
+        return hd;
+    }
+
+    return hd;    
+}
+
 Song *Undo(Song *hd) {
     if (hd == NULL) {
         return NULL;
@@ -50,6 +72,7 @@ Song *Undo(Song *hd) {
 int main(){
 
     Song *head =NULL;
+    Song *current =NULL;
     string song;
     string singer;
     int rating[3];
@@ -63,9 +86,22 @@ int main(){
         if(song == "UNDO"){
             head = Undo(head);
             print(head);
+            print(current);
             continue;
         }
         if(song == "EXIT") break;
+        if(song == "PREV"){
+            current = Prev(current);
+            print(head);
+            print(current);
+            continue;
+        }
+        if(song == "NEXT"){
+            current = Next(current);
+            print(head);
+            print(current);
+            continue;
+        }
         cout << "enter a singer (EXIT for exit)(Undo for undo the last word): ";
         cin >> singer;
         for(int i=0; i<3; i++){
@@ -74,6 +110,7 @@ int main(){
         }
         head = Insert(head, song, singer, rating);
         print(head);
+        print(current);
     }
     cout << "Program is finished";
 }
