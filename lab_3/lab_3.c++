@@ -2,115 +2,173 @@
 #include <string>
 using namespace std;
 
-typedef struct Song{
+typedef struct Song {
     string title;
     string artist;
     int ratings[3];
     struct Song *next;
     struct Song *prev;
-}Song;
+} Song;
 
-Song *Insert(Song *hd, string sng, string sngr, int rate[3]){
+// Append a new song to the END of the list
+Song *Append(Song *head, string sng, string sngr, int rate[3]) {
     Song *p = new Song;
     p->title = sng;
     p->artist = sngr;
-    for(int i=0; i<3; i++){
-            p->ratings[i] = rate[i];
-        }
-    p->next = hd;
-    p->prev = hd;
-    return p;
-}
-void print(Song *hd){
-    while(hd!=NULL){
-        cout << hd->title <<","<<hd->artist<<",";
-        for(int i=0; i<3; i++){
-            cout << hd->ratings[i];
-            cout << ",";
-        }
-        cout << "->";
-        hd = hd->next;
-    }
-    if(hd==NULL){
-        cout << "NULL" << endl;
-    }
+    for (int i = 0; i < 3; i++)
+        p->ratings[i] = rate[i];
+    p->next = NULL;
+    p->prev = NULL;
+
+    if (head == NULL)
+        return p;
+
+    // Traverse to the last node
+    Song *tail = head;
+    while (tail->next != NULL)
+        tail = tail->next;
+
+    tail->next = p;
+    p->prev = tail;
+    return head;
 }
 
-Song *Prev(Song *hd) {
-    if (hd == NULL) {
+// Display the entire list, highlighting the current song
+void Display(Song *head, Song *current) {
+    if (head == NULL) {
+        cout << "[ Empty playlist ]" << endl;
+        return;
+    }
+    Song *temp = head;
+    while (temp != NULL) {
+        if (temp == current)
+            cout << " --> [CURRENT] ";
+        else
+            cout << "              ";
+        cout << "\"" << temp->title << "\" by " << temp->artist << " | Ratings: ";
+        for (int i = 0; i < 3; i++) {
+            cout << temp->ratings[i];
+            if (i < 2) cout << ", ";
+        }
+        cout << endl;
+        temp = temp->next;
+    }
+    cout << endl;
+}
+
+// Move current pointer to the NEXT song
+Song *Next(Song *current) {
+    if (current == NULL) {
+        cout << "[!] No current song selected." << endl;
+        return current;
+    }
+    if (current->next == NULL) {
+        cout << "[!] Already at the last song." << endl;
+        return current;
+    }
+    return current->next;
+}
+
+// Move current pointer to the PREVIOUS song
+Song *Prev(Song *current) {
+    if (current == NULL) {
+        cout << "[!] No current song selected." << endl;
+        return current;
+    }
+    if (current->prev == NULL) {
+        cout << "[!] Already at the first song." << endl;
+        return current;
+    }
+    return current->prev;
+}
+
+// Remove the currently selected song, reconnecting the list
+// Returns the new head via reference, and the new current via return value
+Song *RemoveCurrent(Song *&head, Song *current) {
+    if (current == NULL) {
+        cout << "[!] No current song to remove." << endl;
         return NULL;
     }
-    
-    Song *prvhd = hd;
-    hd = hd->next; 
-    return hd;    
+
+    Song *newCurrent = NULL;
+
+    // Reconnect neighbours
+    if (current->prev != NULL)
+        current->prev->next = current->next;
+    else
+        head = current->next;   // current was the head
+
+    if (current->next != NULL)
+        current->next->prev = current->prev;
+
+    // Choose new current: prefer next, else prev
+    if (current->next != NULL)
+        newCurrent = current->next;
+    else
+        newCurrent = current->prev;
+
+    cout << "[+] Removed: \"" << current->title << "\"" << endl;
+    delete current;
+    return newCurrent;
 }
 
-Song *Next(Song *hd) {
-    
-    Song *nxthd = hd;
-    nxthd = hd->prev;
-
-    if (hd == NULL) {
-        return hd;
-    }
-
-    return hd;    
-}
-
-Song *Undo(Song *hd) {
-    if (hd == NULL) {
-        return NULL;
-    }
-    
-    Song *dlthd = hd;
-    hd = hd->next;     
-    delete dlthd;    
-    return hd;    
-}
-
-int main(){
-
-    Song *head =NULL;
-    Song *current =NULL;
-    string song;
-    string singer;
+int main() {
+    Song *head    = NULL;
+    Song *current = NULL;
+    string song, singer;
     int rating[3];
 
-    Song s1;
-    Song *ps =&s1;
+    cout << "========================================" << endl;
+    cout << "    Music Playlist Manager (DLL)        " << endl;
+    cout << "========================================" << endl;
+    cout << "Commands: EXIT | NEXT | PREV | REMOVE" << endl << endl;
 
-    while(1){
-        cout << "enter a song (EXIT for exit)(Undo for undo the last word): ";
+    while (true) {
+        cout << "Enter a song title (or command): ";
         cin >> song;
-        if(song == "UNDO"){
-            head = Undo(head);
-            print(head);
-            print(current);
-            continue;
-        }
-        if(song == "EXIT") break;
-        if(song == "PREV"){
-            current = Prev(current);
-            print(head);
-            print(current);
-            continue;
-        }
-        if(song == "NEXT"){
+
+        if (song == "EXIT") break;
+
+        if (song == "NEXT") {
             current = Next(current);
-            print(head);
-            print(current);
+            Display(head, current);
             continue;
         }
-        cout << "enter a singer (EXIT for exit)(Undo for undo the last word): ";
+        if (song == "PREV") {
+            current = Prev(current);
+            Display(head, current);
+            continue;
+        }
+        if (song == "REMOVE") {
+            current = RemoveCurrent(head, current);
+            Display(head, current);
+            continue;
+        }
+
+        cout << "Enter artist name: ";
         cin >> singer;
-        for(int i=0; i<3; i++){
-            cout << "enter a ratings (EXIT for exit)(Undo for undo the last word): ";
+        for (int i = 0; i < 3; i++) {
+            cout << "Enter rating #" << i + 1 << ": ";
             cin >> rating[i];
         }
-        head = Insert(head, song, singer, rating);
-        print(head);
-        print(current);
+
+        head = Append(head, song, singer, rating);
+
+        // If this is the first song, set it as current
+        if (current == NULL)
+            current = head;
+
+        Display(head, current);
     }
-    cout << "Program is finished";
+
+    // Free all nodes
+    Song *temp = head;
+    while (temp != NULL) {
+        Song *next = temp->next;
+        delete temp;
+        temp = next;
+    }
+
+    cout << "Program finished." << endl;
+    return 0;
 }
